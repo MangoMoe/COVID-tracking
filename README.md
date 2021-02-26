@@ -1,3 +1,7 @@
+## Note
+
+I did not make this tool nor did I help with the paper. This fork is for my sensitivity analysis of the tool itself to the input parameters in order to evaluate its effectiveness in normal and extreme cases.
+
 # COVID-19 Outbreak Detection Tool
 
 ## About this project

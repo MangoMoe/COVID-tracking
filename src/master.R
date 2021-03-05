@@ -1,5 +1,5 @@
 # Set Working Directory to File source directory
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 #2
 source("Preprocess_us-counties-states.R")

@@ -13,7 +13,7 @@ lapply(list.of.packages, require, character.only = TRUE)
 
 
 # Set Working Directory to File source directory
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 registerDoParallel(cores=detectCores())

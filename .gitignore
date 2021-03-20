@@ -8,3 +8,6 @@ __pycache__
 **/us-counties_latest.csv
 **/14_Day_Table.csv
 *.csv
+*.rds
+*.pickle
+*.swp

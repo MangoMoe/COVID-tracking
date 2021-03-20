@@ -53,7 +53,7 @@ for (cutoff in cutoff.list){
     if (first.block.cutoff > cutoff){
       first.block.cutoff <- cutoff
     }
-    break
+    # break
   }
 }
 num_trees=200
@@ -86,12 +86,16 @@ counter <- 1
 
 #cutoff.list
 #foreach(cutoff = 51) %dopar%{
+
 for(cutoff in cutoff.list){
+  print("Cutoff")
+  print(cutoff)
   #################################
   # Skip file if it exists  
   check.file.name <- paste0("block_results_",toString(cutoff),".csv")
   check.file.full.name <- file.path(outputfolder, check.file.name) 
   if (file.exists(check.file.full.name)){next}
+  # if (cutoff == 400){next}
   #################################
   # See if block is already in there
   # Block is numbered by last day in it
@@ -107,7 +111,7 @@ for(cutoff in cutoff.list){
     shift <- (cutoff - first.block.cutoff)%%windowsize 
     data.cutoff.list <- c(seq(first.block.cutoff + shift, cutoff, windowsize))
     #data.cutoff.list <- c(seq(first.block.cutoff, cutoff, 1))
-    print(data.cutoff.list)
+    # print(data.cutoff.list)
     
     block.fullpath.list <- c()
     for (block.number in data.cutoff.list){
@@ -121,12 +125,18 @@ for(cutoff in cutoff.list){
     outcome <- df$shifted_log_rolled_cases
     
     #exclusion <- c("shifted_log_rolled_cases","fips","State_FIPS_Code","county","state","datetime","log_rolled_cases.x","shifted_time")
+    # TODO this is the excluded columns in the data
     exclusion <- c("shifted_log_rolled_cases","new_rolled_cases","datetime","State_FIPS_Code","county","state","log_rolled_cases.x","shifted_time")
     
     covariates <- (df[,-which(names(df) %in% exclusion)])
     #covariates <- unique(covariates)
     
+    print("Data/covariates:")
+    # print(covariates)
+    print(dim(covariates))
     state.tau.forest <- grf::causal_forest(X=covariates, Y=outcome, W= treatment, num.trees = num_trees)
+    saveRDS(state.tau.forest, paste("model_", toString(counter), ".rds", sep=""))
+    # my_model <- readRDS("model.rds")
     
     exclusion.test <- c("shifted_log_rolled_cases","new_rolled_cases","datetime","State_FIPS_Code","county","state","shifted_time")
     
@@ -138,6 +148,8 @@ for(cutoff in cutoff.list){
     final.day.cases <- covariates.test.unique$log_rolled_cases.x
     covariates.test.unique <- covariates.test.unique[,-which(names(covariates.test.unique) %in% c("log_rolled_cases.x"))]
     
+    print("Covariates test unique")
+    print(dim(covariates.test.unique))
     state.tau.hat <- predict(state.tau.forest, covariates.test.unique, estimate.variance = FALSE)$predictions
     #state.tau.hat <- unlist(state.tau.hat)
     print(state.tau.hat)
@@ -156,7 +168,7 @@ for(cutoff in cutoff.list){
     }
     state.t0.hat <- (E.log_rolled_cases - state.tau.hat*E.shifted_time)/(-state.tau.hat)
     
-    print(state.t0.hat)
+    # print(state.t0.hat)
    
     # Write down results
     results <- data.frame("fips"=identifiers[1],"log_rolled_cases.y"=identifiers[2],"days_from_start"=cutoff)
@@ -192,4 +204,5 @@ for(cutoff in cutoff.list){
   })
   #break
 }
+warnings()
 closeAllConnections()

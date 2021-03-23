@@ -12,6 +12,9 @@ final_means = pickle.load(open("means.pickle", "rb"))
 final_cov = pickle.load(open("covariances.pickle", "rb"))
 uni_cols = pickle.load(open("unique_columns.pickle", "rb"))
 
+print(final_means.shape)
+print(final_cov.shape)
+
 # %%
 threshold = 10
 # print(uni_cols.shape)
@@ -165,7 +168,8 @@ class Model(object):
         if type(X) is not np.ndarray:
             X = np.array(X)
 
-        X = np.reshape(X, (1, X.shape[0]))
+        if len(X.shape) == 1:
+            X = np.reshape(X, (1, X.shape[0]))
         rows, cols = X.shape
         print("Rows: {}\nCols: {}".format(rows, cols))
         X_mat = r.matrix(X, nrow=rows, ncol=cols)
@@ -217,6 +221,11 @@ low_cat[low_cat.index] = 0
 high = high.append(high_cat)
 low = low.append(low_cat)
 
+# Drop unused columns
+high_cols = set(high.index)
+high = high.drop(removed_cols.intersection(high_cols))
+low = low.drop(removed_cols.intersection(high_cols))
+
 # Then create a matrix of different combinations of high and low for each thing
 data = create_sample()
 
@@ -230,21 +239,83 @@ data_low[low.index] = low
 
 # All low but one
 print(high.shape[0])
-data_mat = data.copy()
+data_mat = data_high.copy()
 # TODO check this is right...
-for i in range(low.shape[0]):
+for i in range(data_low.shape[0]):
     temp = data_low.copy()
+    # Includes the ones we are not changing but the high and low values are the same for those so it doesn't really matter that much
     temp.iloc[i] = data_high.iloc[i]
-    data_mat = pd.concat([data_mat, temp])
+    data_mat = pd.concat([data_mat, temp], axis=1)
 
 # All high but one
+for i in range(data_high.shape[0]):
+    temp = data_high.copy()
+    temp.iloc[i] = data_low.iloc[i]
+    data_mat = pd.concat([data_mat, temp], axis=1)
 
 # Append all low
+data_mat = pd.concat([data_mat, data_low], axis=1)
+print(data_mat.shape)
+data_mat = data_mat.T
+print(data_mat.shape)
 
 # Run the matrix through the model and record all of the results
 #   You might want to split the results into 4 groups. All low, the ones with one high, the ones with one low, and all high for ease of the next computations
-
-# finally calculate C_o and C_e for each factor and then calculate the ordering
+# res = model.predict(data_mat.to_numpy())
+# print(res.shape)
+res_mat = np.zeros(data_mat.shape[0])
+for i in tqdm(range(data_mat.shape[0])):
+    res = model.predict(data_mat.iloc[i].to_numpy())
+    res_mat[i] = res[0][0]
+print(res_mat.shape)
 
 # %%
-print(type(uni_cols))
+# TODO so, basically I'm not exactly sure if the model expects normalized data or not, it seems not but I can't tell.
+    # Well having too big of data would be better to see this effect so we'll stay how we are doing it
+# finally calculate C_o and C_e for each factor and then calculate the ordering
+n = data_mat.shape[1]
+first = res_mat[0]
+last = res_mat[-1]
+low_end = res_mat[1:n + 1]
+high_end = res_mat[n+1:2*n + 1]
+print(first)
+print(last)
+print(low_end.shape)
+print(high_end.shape)
+
+odd_effects = 0.25 * ((last - high_end) + (low_end - first))
+even_effects = 0.25 * ((last - high_end) - (low_end - first))
+
+measure = np.abs(odd_effects) + np.abs(even_effects)
+print(measure.shape)
+
+measure = pd.Series(measure, index=data.index)
+
+# %%
+
+# This already takes variable scale into account since that was caputred in the magnitudes of the high and low values
+
+measure = measure.sort_values(ascending=False)
+print(measure)
+# index, sorter = measure.index.sort_values(ascending=False, return_indexer=True)
+# print(sorter)
+# print()
+# measure = measure.reindex(index)
+# print(measure[sorter])
+# pprint(list(index))
+
+# %%
+import pickle
+pickle.dump(measure,  open("cotter_measure.pickle", "wb"))
+pickle.dump(res_mat,  open("cotter_2np2.pickle", "wb"))
+
+# %%
+import pickle
+measure = pickle.load(open("cotter_measure.pickle", "rb"))
+res_mat = pickle.load(open("cotter_2np2.pickle", "rb"))
+
+# %%
+# Lets try getting like the top 30 or something
+amount = 30
+print(measure.iloc[:amount])
+selection = measure.iloc[:amount]

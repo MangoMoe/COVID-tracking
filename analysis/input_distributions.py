@@ -34,7 +34,7 @@ mat = vec.T@vec
 print(mat)
 
 # %%
-def check_csv(csv_file):
+def check_csv(csv_file, columns=None):
     df = pd.read_csv(csv_file)
     df = df.select_dtypes(include=np.number)
     # NOTE: we are going to only calculate distributions over non-categorical variables,
@@ -51,6 +51,11 @@ def check_csv(csv_file):
     df = df[cols[num_unique > threshold]]
     print("Size after")
     print(df.shape)
+
+    if columns is not None:
+        print()
+        print("Printing dataframe's supposedly negative columns")
+        print(df[columns])
 
 
     # cols = list(df.columns)
@@ -316,22 +321,32 @@ print(np.min(covariance))
 
 # %%
 # Okay we are going to go with subsampling
-def check_csv(csv_file, num_samples=5):
+def check_csv(csv_file, num_samples=5, columns=None):
     df = pd.read_csv(csv_file)
     df = df.select_dtypes(include=np.number)
+    df = df.fillna(0)
+    df.columns = df.columns.str.strip()
+    df_pos = (df >= 0).T[(df >= 0).all(axis=0)].index
+    if columns is not None:
+        print()
+        print("Produced index:")
+        print(df_pos)
+        print()
+        print("Possibly negative columns...")
+        print(df[df[columns] < 0].head())
 
     # NOTE: we are going to only calculate distributions over non-categorical variables,
     #   we will still have to account for them in our analysis, but we will use something like the morris method and set the categorical ones to each possible value.
-    cols = df.columns
-    num_unique = []
-    for col in cols:
-        num_unique.append(len(np.unique(df[col])))
-    threshold = 10
-    cols = np.array(cols)
-    num_unique = np.array(num_unique)
-    # print("Size before")
-    # print(df.shape)
-    df = df[cols[num_unique > threshold]]
+    # cols = df.columns
+    # num_unique = []
+    # for col in cols:
+    #     num_unique.append(len(np.unique(df[col])))
+    # threshold = 10
+    # cols = np.array(cols)
+    # num_unique = np.array(num_unique)
+    # # print("Size before")
+    # # print(df.shape)
+    # df = df[cols[num_unique > threshold]]
 
     # df = df[final_cols]
 
@@ -339,11 +354,12 @@ def check_csv(csv_file, num_samples=5):
     # print("Size after")
     # print(df.shape)
     # sample has a lot of different modes, like percentages and whatnot, so try those out too
-    res = df.sample(num_samples)
+    # res = df.sample(num_samples)
     # print(res.shape)
-    del df
-    uni_cols = pd.Series(num_unique, index=cols)
-    return res, uni_cols
+    # del df
+    # uni_cols = pd.Series(num_unique, index=cols)
+    # return res, uni_cols, df_pos.to_series()
+    return None, None, df_pos.to_series()
 
 means = []
 covs = []
@@ -353,29 +369,41 @@ uni_cols = None
 # for i in range(5):
 for i in range(1):
     print("\nIteration {}".format(i + 1))
-    samples, uni_cols = check_csv(os.path.join("..", "data", "block_windowsize=2", "block_{}.csv".format(51)))
+    samples, uni_cols, pos_cols = check_csv(os.path.join("..", "data", "block_windowsize=2", "block_{}.csv".format(51)))
     # print(samples.shape)
     for i in tqdm(range(52, 402)):
+    # for i in tqdm(range(84, 86)):
     # for i in tqdm(range(52, 54)):
+        if i == 83 or i == 84:
+            continue
         file_path = os.path.join("..", "data", "block_windowsize=2", "block_{}.csv".format(i))
         # summy_n, sum_sq_n, n_n, ok, max_n = check_csv(file_path)
-        subset, uni_cols_n = check_csv(file_path)
-        uni_cols, uni_cols_n = uni_cols.align(uni_cols_n, fill_value=0)
-        uni_cols = pd.concat([uni_cols, uni_cols_n], axis=1).max(axis=1)
-        # print("Before:")
-        # print(subset.shape)
-        # print(samples.shape)
-        samples, subset = samples.align(subset, fill_value=0, axis=1)
-        # print("After")
-        # print(subset.shape)
-        # print(samples.shape)
-        samples = pd.concat([samples, subset])
+        # subset, uni_cols_n, pos_cols_n = check_csv(file_path, columns=pos_cols)
+        subset, uni_cols_n, pos_cols_n = check_csv(file_path)
+        # print(pos_cols)
+        # uni_cols, uni_cols_n = uni_cols.align(uni_cols_n, fill_value=0)
+        # uni_cols = pd.concat([uni_cols, uni_cols_n], axis=1).max(axis=1)
+        # samples, subset = samples.align(subset, fill_value=0, axis=1)
+        # samples = pd.concat([samples, subset])
 
-    mean = samples.mean()
-    means.append(mean)
-    cov = samples.cov()
-    covs.append(cov)
-    indexes.append(mean.index)
+        pos_cols, pos_cols_n = pos_cols.align(pos_cols_n, join="inner", fill_value=0)
+
+    # mean = samples.mean()
+    # means.append(mean)
+    # cov = samples.cov()
+    # covs.append(cov)
+    # indexes.append(mean.index)
+
+print()
+print(pos_cols.index)
+print()
+print(pos_cols.shape)
+
+# %%
+from pprint import pprint
+pprint(list(pos_cols.index))
+print()
+print('totalTestsViral' in list(pos_cols.index))
 
 # %%
 # use the mean

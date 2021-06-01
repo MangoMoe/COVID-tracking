@@ -24,10 +24,15 @@ model.load(os.path.join("..","src","model_130"))
 
 # %%
 # Lets try getting like the top 30 or something
+# TODO cotter's method captures interactions, oat methods do not, maybe that is contributing to the zero sensitivities
 amount = 50
 measure = measure.sort_values(ascending=False)
-print(measure.iloc[:amount])
-selection = measure.iloc[:amount]
+# print(measure.iloc[:amount])
+# selection = measure.iloc[:amount]
+selection = measure.iloc[:]
+# will this slow everything down?
+test = 0
+# hmm seems okay so far...
 
 # %%
 # Now to get some samples to calculate sensitivity for
@@ -46,13 +51,22 @@ selection = measure.iloc[:amount]
 
 # point should be a pandas object
 def sensitivity_analysis(model, point, selection, means, std_devs, delta=0.50):
+    print("Face_mask_mandate_enforced_by_fines" in selection.index)
+    point, _ = point.align(selection)
+    print("Face_mask_mandate_enforced_by_fines" in point.index)
+    std_devs, _ = std_devs.align(selection)
+    point.fillna(means, inplace=True)
+    std_devs.fillna(0, inplace=True)
     sensitivity = dict()
     q_0 = model.predict(point.to_numpy())
+    # This is probably inefficient...
+        # TODO wait just use aligns...
     print(q_0)
     for column in tqdm(selection.index):
-        # This is probably inefficient...
         shift_point = point.copy()
         # TODO adding standard deviations to try to get something to happen...
+        # This is probably inefficient...
+        # shift_point += delta * std_devs[shift_point.index]
         shift_point[column] += delta * std_devs[column]
         print("------")
         print()
@@ -62,17 +76,19 @@ def sensitivity_analysis(model, point, selection, means, std_devs, delta=0.50):
         print()
         print(q)
         sensitivity[column] = (q - q_0) / delta
+        print(sensitivity[column])
     
     sensitivity = pd.Series(sensitivity)
     return sensitivity
 
 point = create_sample()
-sens = sensitivity_analysis(model, point, selection, final_means, std_devs, delta=10.0)
+sens = sensitivity_analysis(model, point, selection, final_means, std_devs, delta=100.0)
 sens = sens.sort_values(ascending=False)
 print()
 print(sens)
 
 # %%
-point = create_sample()
-q = model.predict(point.to_numpy())
-print(q)
+# point = create_sample()
+# q = model.predict(point.to_numpy())
+# print(q)
+print(sens)

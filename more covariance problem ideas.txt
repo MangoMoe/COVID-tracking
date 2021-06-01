@@ -1,0 +1,37 @@
+problems:
+
+not symmetric somewhere (but everywhere I have looked so far it is
+Huge magnitudes in some areas...
+
+
+
+subsampling to get approximate covariance
+
+average covariances for each file
+
+remove irellevant things like id numbers
+
+cross validation
+	verify that you can use a smaller sample size
+
+
+binomial distribution
+
+binary doesn't count
+
+
+
+run the model!!!!!! see how long it will take
+
+replace some columns with the average or the most frequent or something
+
+
+dimensionality reduction
+	just find variance, if small enough just replace with the mean
+
+
+sharpness equation
+
+	mean / variance 
+	how varied actually is it
+

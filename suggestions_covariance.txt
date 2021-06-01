@@ -1,0 +1,13 @@
+bioinformatics for incremental stuff
+
+chemometrics PCA or PLS
+
+rolling function in pandas to get correlation/variance/covariance
+	maybe numpy
+	pandas for incremental/rolling covariance
+
+
+Take into account binary data
+	isn't there one like a binomial distribution
+	or just a proportion
+	binomial regression/logistic analysis

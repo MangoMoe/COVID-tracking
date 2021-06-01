@@ -9,6 +9,8 @@ import pickle
 from sample_creation import create_sample
 from r_model_load import Model
 
+os.environ['R_HOME'] = r"PATH_TO_R_HOME_HERE"
+
 # %%
 measure = pickle.load(open("cotter_measure.pickle", "rb"))
 # res_mat = pickle.load(open("cotter_2np2.pickle", "rb"))
